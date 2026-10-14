@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf" content="{{ csrf }}">
+<title>BankScope — Banking Business Analytics</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div id="loader"><div class="bar"></div></div>
+<div id="toasts"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="brand"><div class="logo">B</div><div><b>BankScope</b><small>Banking Analytics</small></div></div>
+  <nav id="nav"></nav>
+  <div class="side-foot">
+    <div class="ds-pill" id="ds-pill">No dataset loaded</div>
+    <small>Academic demonstration. Model outputs are experimental estimates, not financial decisions.</small>
+  </div>
+</aside>
+<div class="scrim" id="scrim"></div>
+
+<main>
+  <header class="topbar">
+    <button class="icon-btn menu" id="menu" aria-label="Menu">☰</button>
+    <h1 id="page-title">Dashboard</h1>
+    <div class="top-right"><span class="badge" id="top-ds">Upload a dataset to begin</span><span class="badge">👤 {{ user }}</span><button class="btn ghost sm" id="logout">Sign out</button></div>
+  </header>
+
+  <!-- DASHBOARD -->
+  <section class="view" id="view-dashboard">
+    <div class="hero">
+      <div><h2 id="hero-title">Turn banking data into decisions</h2>
+        <p id="hero-sub">Upload a Kaggle banking dataset to clean it, explore it, segment customers, predict churn and credit risk, and track trends. Every number you see is calculated from your file.</p></div>
+      <button class="btn light" data-go="upload">Upload dataset</button>
+    </div>
+    <div class="cards" id="cards"></div>
+    <div class="card"><h3>Key insights</h3><div id="dash-insights" class="muted">Insights appear here once a dataset is loaded.</div></div>
+  </section>
+
+  <!-- UPLOAD -->
+  <section class="view" id="view-upload">
+    <div class="card">
+      <h3>Upload dataset</h3>
+      <label class="drop" id="drop">
+        <input type="file" id="file" accept=".csv,.xlsx" hidden>
+        <div class="drop-ic">⇪</div>
+        <b>Drop a CSV or Excel file here, or click to browse</b>
+        <span class="muted" id="limits">Loading limits…</span>
+      </label>
+      <div id="upload-msgs"></div>
+    </div>
+    <div id="upload-result" hidden>
+      <div class="cards" id="info-cards"></div>
+      <div class="card"><h3>Detected columns</h3><p class="muted">“Kind” is detected automatically. Identifier columns are excluded from statistics and models.</p><div class="scroll" id="col-table"></div></div>
+      <div class="card"><h3>Preview (first 10 rows)</h3><div class="scroll" id="preview-table"></div></div>
+    </div>
+  </section>
+
+  <!-- CLEAN -->
+  <section class="view needs-data" id="view-clean">
+    <div class="work">
+      <div class="grid2">
+        <div class="card"><h3>Missing values &amp; duplicates</h3>
+          <label class="check"><input type="checkbox" id="c-dup"> Remove duplicate rows</label>
+          <div class="row"><label>Numeric columns<select id="c-nfill"><option value="none">Leave as is</option><option value="median">Fill with median</option><option value="mean">Fill with mean</option></select></label>
+          <label>Categorical columns<select id="c-cfill"><option value="none">Leave as is</option><option value="mode">Fill with most frequent</option><option value="custom">Fill with custom value</option></select></label></div>
+          <label>Custom value<input type="text" id="c-ccustom" value="Unknown" maxlength="100"></label>
+        </div>
+        <div class="card"><h3>Outliers (IQR method)</h3>
+          <label>Treatment<select id="c-out"><option value="none">Detect only (no change)</option><option value="cap">Cap at 1.5×IQR fences</option><option value="remove">Remove outlier rows</option></select></label>
+          <p class="muted small">Columns to treat (none ticked = all numeric columns)</p><div class="chips" id="c-outcols"></div>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="card"><h3>Fix data types</h3>
+          <p class="muted small">Text columns that look numeric (e.g. “$1,200”)</p><div class="chips" id="c-num"></div>
+          <p class="muted small">Text columns that look like dates</p><div class="chips" id="c-date"></div></div>
+        <div class="card"><h3>Remove columns</h3><div class="chips" id="c-drop"></div></div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="c-preview">Preview changes</button>
+        <button class="btn" id="c-apply">Apply to working copy</button>
+        <button class="btn ghost" id="c-reset">Reset to original</button>
+        <a class="btn ghost" href="/api/download/cleaned">Download cleaned CSV</a>
+      </div>
+      <div id="clean-result"></div>
+    </div>
+  </section>
+
+  <!-- EDA -->
+  <section class="view needs-data" id="view-eda">
+    <div class="work">
+      <div class="card"><h3>Chart builder</h3>
+        <div class="row">
+          <label>Chart<select id="e-type"><option value="bar">Bar</option><option value="line">Line</option><option value="histogram">Histogram</option><option value="scatter">Scatter</option></select></label>
+          <label>X column<select id="e-x"></select></label>
+          <label>Y column<select id="e-y"></select></label>
+          <label>Aggregation<select id="e-agg"><option value="count">Count</option><option value="mean">Mean</option><option value="sum">Sum</option><option value="median">Median</option></select></label>
+        </div>
+        <button class="btn" id="e-go">Build chart</button>
+        <div id="e-notes"></div>
+        <div class="chart-box" id="e-box" hidden><canvas id="e-canvas"></canvas></div>
+      </div>
+      <div id="eda-out"></div>
+    </div>
+  </section>
+
+  <!-- SEGMENT -->
+  <section class="view needs-data" id="view-segment">
+    <div class="work">
+      <div class="card"><h3>K-Means customer segmentation</h3>
+        <p class="muted">Choose numeric customer features (e.g. balance, salary, tenure). Identifiers are excluded automatically. Features are standardised and missing values filled with the median.</p>
+        <div class="chips" id="s-feats"></div>
+        <div class="row">
+          <label>Number of clusters<input type="number" id="s-k" value="4" min="2" max="10"></label>
+          <label>Scatter X<select id="s-x"></select></label>
+          <label>Scatter Y<select id="s-y"></select></label>
+        </div>
+        <div class="actions"><button class="btn" id="s-go">Run segmentation</button><a class="btn ghost" id="s-dl" href="/api/download/segments" hidden>Download cluster assignments</a></div>
+      </div>
+      <div id="seg-out"></div>
+    </div>
+  </section>
+
+  <section class="view needs-data" id="view-churn"><div class="work" id="churn-root"></div></section>
+  <section class="view needs-data" id="view-credit"><div class="work" id="credit-root"></div></section>
+
+  <!-- TREND -->
+  <section class="view needs-data" id="view-trend">
+    <div class="work">
+      <div class="card"><h3>Trend &amp; baseline forecast</h3>
+        <p class="muted">Group a metric over time and project it forward with a simple moving average. This is a baseline, not a guarantee.</p>
+        <div class="row">
+          <label>Date column<select id="t-date"></select></label>
+          <label>Metric<select id="t-metric"></select></label>
+          <label>Aggregation<select id="t-agg"><option value="sum">Sum</option><option value="mean">Mean</option><option value="count">Count of records</option></select></label>
+          <label>Group by<select id="t-freq"><option value="M">Month</option><option value="W">Week</option><option value="D">Day</option></select></label>
+          <label>MA window<input type="number" id="t-win" value="3" min="2" max="12"></label>
+          <label>Forecast periods<input type="number" id="t-hor" value="6" min="1" max="24"></label>
+        </div>
+        <button class="btn" id="t-go">Analyse trend</button>
+      </div>
+      <div id="trend-out"></div>
+    </div>
+  </section>
+
+  <!-- REPORT -->
+  <section class="view needs-data" id="view-report">
+    <div class="work">
+      <div class="card"><h3>Business insights</h3>
+        <p class="muted">Rule-based statements calculated from your data and the analyses you have run. They describe patterns; they do not prove causes.</p>
+        <div id="rep-insights"></div>
+        <div class="actions"><button class="btn ghost" id="rep-refresh">Refresh insights</button>
+          <a class="btn" href="/api/report?format=html">Download HTML report</a>
+          <a class="btn ghost" href="/api/report?format=csv">Download CSV report</a></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="{{ url_for('static', filename='js/chart.umd.js') }}"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

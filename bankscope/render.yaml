@@ -1,0 +1,32 @@
+# Render Blueprint for BankScope.  Free plan: accounts and data reset on every restart/redeploy/spin-down.
+services:
+  - type: web
+    name: bankscope
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    # ONE worker is required: uploaded datasets live in that process's memory.
+    startCommand: gunicorn app:app --workers 1 --threads 4 --timeout 120 --bind 0.0.0.0:$PORT
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.3
+      - key: BANKSCOPE_PRODUCTION
+        value: "1"
+      - key: BANKSCOPE_SECRET_KEY
+        generateValue: true
+      # Keep memory under the free plan's 512 MB:
+      - key: BANKSCOPE_MAX_UPLOAD_MB
+        value: "25"
+      - key: BANKSCOPE_MAX_ROWS
+        value: "100000"
+      - key: BANKSCOPE_MAX_ML_ROWS
+        value: "30000"
+    # Paid plans only: keep user accounts across restarts. Uncomment these lines
+    # and the BANKSCOPE_DB_PATH variable, and change `plan: free` to `plan: starter`.
+    # disk:
+    #   name: bankscope-data
+    #   mountPath: /var/data
+    #   sizeGB: 1
+    # (add under envVars)  - key: BANKSCOPE_DB_PATH
+    #                        value: /var/data/bankscope.db

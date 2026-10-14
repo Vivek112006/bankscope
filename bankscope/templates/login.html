@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf" content="{{ csrf }}">
+<meta name="color-scheme" content="light">
+<title>Sign in — BankScope</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232563eb'/%3E%3Cpath d='M9 8h8a4 4 0 0 1 2 7.5A4.5 4.5 0 0 1 17.5 24H9z' fill='none' stroke='white' stroke-width='2.4' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="auth-body">
+<main class="auth">
+  <section class="auth-hero" aria-hidden="false">
+    <div class="brand"><div class="logo">B</div><div><b>BankScope</b><small>Banking Business Analytics</small></div></div>
+    <div class="hero-copy">
+      <h2>Turn banking data into decisions</h2>
+      <p>Upload a banking dataset and explore it, segment customers, predict churn and credit risk, and track trends — every number calculated from your own file.</p>
+      <ul class="feat">
+        <li><span class="fi"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><div><b>Customer segmentation</b><small>K-Means clusters you can actually read</small></div></li>
+        <li><span class="fi"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><div><b>Churn &amp; credit-risk models</b><small>Honest, leakage-safe evaluation</small></div></li>
+        <li><span class="fi"><svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></span><div><b>Trends &amp; forecasts</b><small>Baseline moving-average projections</small></div></li>
+      </ul>
+    </div>
+    <small class="legal">Academic demonstration. Model outputs are experimental estimates, not financial decisions.</small>
+  </section>
+
+  <section class="auth-pane">
+    <div class="auth-card">
+      <div class="brand mobile-brand"><div class="logo">B</div><div><b>BankScope</b></div></div>
+      <div class="tabs" role="tablist" aria-label="Account">
+        <button type="button" id="tab-login" class="on" role="tab" aria-selected="true">Sign in</button>
+        <button type="button" id="tab-register" role="tab" aria-selected="false">Create account</button>
+      </div>
+      <h3 id="auth-title">Welcome back</h3>
+      <p class="muted small" id="auth-sub">Sign in to open your dashboard.</p>
+
+      <form id="auth-form" novalidate>
+        <div class="field">
+          <label for="username">Username</label>
+          <div class="input"><svg class="ico" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input type="text" id="username" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="30" placeholder="e.g. priya.analyst" autofocus></div>
+          <div class="ferr" id="err-username" role="alert"></div>
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="input"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" id="password" autocomplete="current-password" maxlength="128" placeholder="Your password">
+            <button type="button" class="eye" id="toggle-pw" aria-label="Show password" aria-pressed="false" tabindex="0">
+              <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+          <div class="hint-row"><div class="ferr" id="err-password" role="alert"></div><div class="caps" id="caps" hidden>⇪ Caps Lock is on</div></div>
+          <div class="strength" id="strength" hidden><div class="meter"><i id="meter-bar"></i></div><span id="strength-text"></span></div>
+        </div>
+
+        <div class="field" id="confirm-wrap" hidden>
+          <label for="confirm">Confirm password</label>
+          <div class="input"><svg class="ico" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            <input type="password" id="confirm" autocomplete="new-password" maxlength="128" placeholder="Repeat your password"></div>
+          <div class="ferr" id="err-confirm" role="alert"></div>
+        </div>
+
+        <p class="muted small" id="rules" hidden>Username: 3–30 letters, numbers, dot, dash or underscore. Password: at least 8 characters, not a common password.</p>
+
+        <div class="opts">
+          <label class="check"><input type="checkbox" id="remember"> Remember my username</label>
+          <button type="button" class="link" id="forgot-btn">Forgot password?</button>
+        </div>
+        <div class="notice info" id="forgot" hidden>BankScope runs on your own computer and has no email service. To reset everything, stop the server and delete the <b>bankscope.db</b> file, then create a new account.</div>
+
+        <div id="auth-error" class="notice warn" hidden role="alert"></div>
+        <button class="btn wide" id="auth-submit" type="submit"><span class="spin" hidden></span><span id="submit-text">Sign in</span></button>
+      </form>
+      <p class="switch muted small" id="switch-line">New to BankScope? <button type="button" class="link" id="switch-btn">Create an account</button></p>
+    </div>
+  </section>
+</main>
+<script src="{{ url_for('static', filename='js/login.js') }}"></script>
+</body>
+</html>
