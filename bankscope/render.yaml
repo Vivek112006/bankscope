@@ -2,6 +2,7 @@
 services:
   - type: web
     name: bankscope
+    rootDir: bankscope
     runtime: python
     plan: free
     buildCommand: pip install -r requirements.txt
